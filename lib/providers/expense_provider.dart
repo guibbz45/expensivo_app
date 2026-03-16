@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
+import '../services/local_storage_service.dart';
 import '../models/expense_model.dart';
 
 class ExpenseProvider extends ChangeNotifier {
   final ApiService _apiService = ApiService();
-  
+
   List<Expense> _expenses = [];
   bool _isLoading = false;
   String? _error;
@@ -13,20 +14,34 @@ class ExpenseProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  Future<void> loadExpenses({int limit = 10}) async {
+  Future<void> loadExpenses({int limit = 10, bool forceRefresh = false}) async {
     _setLoading(true);
     try {
-      _expenses = await _apiService.getExpenses(limit: limit);
-      _error = null;
-      
-      // Seed sample data if no expenses from API
-      if (_expenses.isEmpty) {
-        _expenses = _getSampleExpenses();
+      if (!forceRefresh) {
+        _expenses = await LocalStorageService.loadExpenses();
+        notifyListeners(); 
       }
+
+      if (_expenses.isEmpty || forceRefresh) {
+        final apiExpenses = await _apiService.getExpenses(limit: limit);
+
+        if (apiExpenses.isNotEmpty) {
+          _expenses = apiExpenses;
+        } else if (_expenses.isEmpty) {
+          _expenses = _getSampleExpenses();
+        }
+
+        await LocalStorageService.saveExpenses(_expenses);
+        notifyListeners(); 
+      }
+
+      _error = null;
     } catch (e) {
       _error = e.toString();
-      // Seed samples on error too for demo
-      _expenses = _getSampleExpenses();
+      if (_expenses.isEmpty) {
+        _expenses = _getSampleExpenses();
+        notifyListeners();
+      }
     } finally {
       _setLoading(false);
     }
@@ -36,24 +51,24 @@ class ExpenseProvider extends ChangeNotifier {
     final now = DateTime.now();
     return [
       Expense(
-        id: 'gas1',
+        id: 'transport1',
         title: 'Gas',
         amount: 45.75,
-        category: 'Gas',
+        category: 'Transportation', 
         date: now.subtract(const Duration(days: 2)),
       ),
       Expense(
-        id: 'movies1',
+        id: 'entertainment1',
         title: 'Movies',
         amount: 250.00,
-        category: 'movies',
+        category: 'Entertainment',
         date: now.subtract(const Duration(days: 1)),
       ),
       Expense(
-        id: 'apple1',
+        id: 'food1',
         title: 'Apple',
         amount: 15.50,
-        category: 'apple',
+        category: 'Food', 
         date: now,
       ),
     ];
@@ -63,10 +78,15 @@ class ExpenseProvider extends ChangeNotifier {
     _setLoading(true);
     try {
       final newExpense = await _apiService.createExpense(expense);
-      _expenses.insert(0, newExpense); // Add to top
+      _expenses.insert(0, newExpense);
+      await LocalStorageService.saveExpenses(_expenses);
       _error = null;
+      notifyListeners(); 
     } catch (e) {
       _error = e.toString();
+      _expenses.insert(0, expense);
+      await LocalStorageService.saveExpenses(_expenses);
+      notifyListeners();
     } finally {
       _setLoading(false);
     }
@@ -80,22 +100,41 @@ class ExpenseProvider extends ChangeNotifier {
       if (index != -1) {
         _expenses[index] = updatedExpense;
       }
+      await LocalStorageService.saveExpenses(_expenses);
       _error = null;
+      notifyListeners();
     } catch (e) {
       _error = e.toString();
+      final index = _expenses.indexWhere((e) => e.id == id);
+      if (index != -1) {
+        _expenses[index] = expense;
+        await LocalStorageService.saveExpenses(_expenses);
+      }
+      notifyListeners();
     } finally {
       _setLoading(false);
     }
   }
 
   Future<void> deleteExpense(String id) async {
+    final index = _expenses.indexWhere((e) => e.id == id);
+    final backup = index != -1 ? _expenses[index] : null;
+    if (index != -1) {
+      _expenses.removeAt(index);
+      notifyListeners();
+    }
+
     _setLoading(true);
     try {
       await _apiService.deleteExpense(id);
-      _expenses.removeWhere((e) => e.id == id);
+      await LocalStorageService.saveExpenses(_expenses);
       _error = null;
     } catch (e) {
       _error = e.toString();
+      if (backup != null && index != -1) {
+        _expenses.insert(index, backup);
+        notifyListeners();
+      }
     } finally {
       _setLoading(false);
     }

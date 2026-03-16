@@ -23,10 +23,13 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
   late String _selectedCategory;
   bool _isSaving = false;
 
-final List<String> categories = [
-    'apple',
-    'Gas',
-    'movies'
+  final List<String> categories = [
+    'Food',
+    'Transportation',
+    'Entertainment',
+    'Shopping',
+    'Bills',
+    'Other',
   ];
 
   @override
@@ -43,7 +46,7 @@ final List<String> categories = [
       _amountController = TextEditingController();
       _descriptionController = TextEditingController();
       _selectedDate = DateTime.now();
-      _selectedCategory = 'apple';
+      _selectedCategory = categories.first;
     }
   }
 
@@ -59,20 +62,18 @@ final List<String> categories = [
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(2020),
+      firstDate: DateTime(2000),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: Color(0xFF1A3A52),
-              surface: Color(0xFF1E1E1E),
-              onSurface: Colors.white,
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: Color(0xFF1A3A52),
+            surface: Color(0xFF1E1E1E),
+            onSurface: Colors.white,
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -85,7 +86,7 @@ final List<String> categories = [
     if (_titleController.text.isEmpty || _amountController.text.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please fill in all required fields')),
+          const SnackBar(content: Text('Please fill required fields')),
         );
       }
       return;
@@ -107,29 +108,29 @@ final List<String> categories = [
 
     final expense = Expense(
       id: widget.expense?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      title: _titleController.text,
+      title: _titleController.text.trim(),
       amount: amount,
       category: _selectedCategory,
       date: _selectedDate,
-      description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+      description: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
     );
 
     widget.onSave(expense);
 
+    // ✅ Capture the message before popping, and guard setState with mounted
+    final message = widget.expense != null ? 'Expense updated' : 'Expense added';
+
     if (mounted) {
+      setState(() {
+        _isSaving = false;  // ✅ Reset before Navigator.pop to avoid setState on unmounted widget
+      });
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.expense != null ? 'Expense updated' : 'Expense added',
-          ),
-        ),
+        SnackBar(content: Text(message)),
       );
     }
-
-    setState(() {
-      _isSaving = false;
-    });
   }
 
   @override
@@ -153,90 +154,72 @@ final List<String> categories = [
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Title',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    'Title *',
+                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _titleController,
-                    decoration: InputDecoration(
-                      hintText: 'e.g., Grocery Shopping',
-                      prefixIcon: const Icon(Icons.shopping_cart, color: Colors.white54),
+                    decoration: const InputDecoration(
+                      hintText: 'Grocery Shopping',
+                      prefixIcon: Icon(Icons.text_fields, color: Colors.white54),
                     ),
                     style: const TextStyle(color: Colors.white),
                   ),
                   const SizedBox(height: 20),
-
                   const Text(
-                    'Amount',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    'Amount *',
+                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _amountController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: '0.00',
-                      prefixIcon: const Icon(Icons.attach_money, color: Colors.white54),
+                      prefixIcon: Icon(Icons.attach_money, color: Colors.white54),
                     ),
                     style: const TextStyle(color: Colors.white),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                   const SizedBox(height: 20),
-
                   const Text(
-                    'Category',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    'Category *',
+                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1E1E1E),
-                      border: Border.all(color: const Color(0xFF1A3A52), width: 1),
+                      border: Border.all(color: const Color(0xFF1A3A52)),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: DropdownButton<String>(
-                      value: _selectedCategory,
-                      isExpanded: true,
-                      underline: const SizedBox(),
-                      dropdownColor: const Color(0xFF1E1E1E),
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
-                      items: categories.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _selectedCategory = newValue;
-                          });
-                        }
-                      },
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedCategory,
+                        isExpanded: true,
+                        dropdownColor: const Color(0xFF1E1E1E), // ✅ Added for consistent dropdown styling
+                        style: const TextStyle(color: Colors.white),// ✅ Added so items match theme
+                        items: categories.map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedCategory = newValue;
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
-
                   const Text(
                     'Date',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   GestureDetector(
@@ -245,58 +228,46 @@ final List<String> categories = [
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E1E1E),
-                        border: Border.all(color: const Color(0xFF1A3A52), width: 1),
+                        border: Border.all(color: const Color(0xFF1A3A52)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today, color: Colors.white54, size: 20),
-                          const SizedBox(width: 12),
+                          const Icon(Icons.calendar_today, color: Colors.white54),
+                          const SizedBox(width: 12), // ✅ Fixed: icon and text now grouped together naturally
                           Text(
                             '${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}',
-                            style: const TextStyle(color: Colors.white, fontSize: 16),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
-
                   const Text(
                     'Description (Optional)',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _descriptionController,
-                    decoration: InputDecoration(
-                      hintText: 'Add any notes...',
-                      prefixIcon: const Icon(Icons.description, color: Colors.white54),
+                    decoration: const InputDecoration(
+                      hintText: 'Add notes...',
+                      prefixIcon: Icon(Icons.description, color: Colors.white54),
                     ),
                     style: const TextStyle(color: Colors.white),
                     maxLines: 3,
                   ),
                   const SizedBox(height: 32),
-
                   SizedBox(
                     width: double.infinity,
+                    height: 50,
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1A3A52),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: _saveExpense,
+                      onPressed: _isSaving ? null : _saveExpense,
                       child: _isSaving
                           ? const SizedBox(
-                              height: 20,
                               width: 20,
+                              height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -308,11 +279,9 @@ final List<String> categories = [
                             ),
                     ),
                   ),
-                  const SizedBox(height: 16),
                 ],
               ),
             ),
     );
   }
 }
-
