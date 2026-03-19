@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../constants.dart';
 
 class StartScreen extends StatelessWidget {
   const StartScreen({super.key});

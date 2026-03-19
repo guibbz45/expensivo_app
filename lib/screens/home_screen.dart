@@ -20,9 +20,6 @@ class HomeScreen extends StatelessWidget {
 
   double get _total => expenses.fold(0.0, (sum, e) => sum + e.amount);
 
-  Color _getCategoryColor(String category) {
-    return categoryColors[category.toLowerCase()] ?? categoryColors['other']!;
-  }
 
   @override
   Widget build(BuildContext context) {
