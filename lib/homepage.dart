@@ -25,8 +25,7 @@ class HomePage extends StatelessWidget {
     return map[category.toLowerCase()] ?? const Color(0xFF1A3A52);
   }
 
-  // ── Navigation ──────────────────────────────────────────────────────────────
-
+  
   void _goToEdit(BuildContext context, Expense expense) =>
       Navigator.pushNamed(context, '/edit', arguments: expense);
 
@@ -36,7 +35,7 @@ class HomePage extends StatelessWidget {
   void _goToAdd(BuildContext context) =>
       Navigator.pushNamed(context, '/add');
 
-  // ── Build ───────────────────────────────────────────────────────────────────
+  
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +48,12 @@ class HomePage extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pushReplacementNamed(context, '/start'),
+            ),
             title: const Text(
-              'Expensivo',
+              'Expenses',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -84,7 +87,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // ── Delete dialog ───────────────────────────────────────────────────────────
+  
 
   void _showDeleteDialog(BuildContext context, String id) {
     showDialog(
@@ -102,7 +105,7 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// ── Private sub-widgets ───────────────────────────────────────────────────────
+
 
 class _LoadingView extends StatelessWidget {
   const _LoadingView();

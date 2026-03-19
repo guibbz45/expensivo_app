@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'homepage.dart';
+import 'screens/start_screen.dart';
 import 'providers/expense_provider.dart';
 import 'models/expense_model.dart';
 import 'screens/add_edit_expense_screen.dart';
@@ -22,12 +23,11 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
         onGenerateRoute: AppRouter.onGenerateRoute,
-        home: const HomePage(),
+        home: const StartScreen(),
       ),
     );
   }
 }
-
 
 abstract class AppTheme {
   static const _primary = Color(0xFF1A3A52);
@@ -93,7 +93,6 @@ abstract class AppTheme {
       );
 }
 
-
 abstract class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -118,6 +117,18 @@ abstract class AppRouter {
               }
             },
           ),
+        );
+
+      case '/expenselist':
+        return _buildRoute(
+          settings,
+          (context) => const HomePage(),
+        );
+
+      case '/start':
+        return _buildRoute(
+          settings,
+          (_) => const StartScreen(),
         );
 
       case '/detail':
@@ -146,3 +157,4 @@ abstract class AppRouter {
   static ExpenseProvider _provider(BuildContext context) =>
       Provider.of<ExpenseProvider>(context, listen: false);
 }
+

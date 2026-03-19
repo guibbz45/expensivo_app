@@ -1,16 +1,14 @@
-# expensivo_app
+Expensivo APP
 
-A new Flutter project.
+group project members
 
-## Getting Started
+1: Adolf Rey Asagra
+2: Kristine Carla Paraiso
+3: Rene Richard Borela
+4: Kyle Vincent B. Guibilondo
 
-This project is a starting point for a Flutter application.
+Basic flutter demonstration of local + shared preference, Navigation + Routing, and REST API
 
-A few resources to get you started if this is your first Flutter project:
+REST API is simulated within the app using localapi class to simulate CRUD operations. this app can use sqlite as a backend server for future scaling.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
