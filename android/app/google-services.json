@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "273062394661",
+    "project_id": "expensivo-7ff86",
+    "storage_bucket": "expensivo-7ff86.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:273062394661:android:440e85b50753ec370478cc",
+        "android_client_info": {
+          "package_name": "com.example.expensivo_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiNjwC7ODzRb1TNLMWxP34eCVtX8cZ0I8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

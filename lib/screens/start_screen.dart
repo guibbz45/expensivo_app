@@ -59,6 +59,7 @@ class StartScreen extends StatelessWidget {
                   // Subtitle
                   const Text(
                     'Track your expenses effortlessly',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 20,
                       color: Colors.white70,

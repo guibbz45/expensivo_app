@@ -1,76 +1,62 @@
-import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/expense_model.dart';
+
+
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
 
-  final List<Expense> _store = [
-    Expense(
-      id: _uid(),
-      title: 'Grocery Run',
-      amount: 1250.75,
-      category: 'Food',
-      date: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Expense(
-      id: _uid(),
-      title: 'Shell Gas Station',
-      amount: 2500.00,
-      category: 'Gas',
-      date: DateTime.now().subtract(const Duration(days: 3)),
-    ),
-    Expense(
-      id: _uid(),
-      title: 'Netflix Subscription',
-      amount: 549.00,
-      category: 'Entertainment',
-      date: DateTime.now().subtract(const Duration(days: 5)),
-    ),
-    Expense(
-      id: _uid(),
-      title: 'iPhone Charger',
-      amount: 1899.00,
-      category: 'Apple',
-      date: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-    Expense(
-      id: _uid(),
-      title: 'SM Cinema',
-      amount: 420.00,
-      category: 'Movies',
-      date: DateTime.now().subtract(const Duration(days: 10)),
-    ),
-  ];
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  static const String _collection = 'expenses';
 
   Future<List<Expense>> getExpenses({int limit = 10}) async {
-    await _fakeDelay();
-    final result = _store.reversed.take(limit).toList();
-    return List.unmodifiable(result);
+    final snapshot = await _db
+        .collection(_collection)
+        .orderBy('date', descending: true)
+        .limit(limit)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      // Prefer stored id, but fall back to document id.
+      final id = (data['id'] ?? doc.id).toString();
+      return Expense(
+        id: id,
+        title: (data['title'] ?? '') as String,
+        amount: (data['amount'] as num).toDouble(),
+        category: (data['category'] ?? '') as String,
+        date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        description: data['description'] as String?,
+      );
+    }).toList(growable: false);
   }
-
-
 
   Future<Expense> createExpense(Expense expense) async {
-    await _fakeDelay();
-    final created = Expense(
-      id: _uid(),
-      title: expense.title,
-      amount: expense.amount,
-      category: expense.category,
-      date: expense.date,
-    );
-    _store.add(created);
-    return created;
+    final docRef = _db.collection(_collection).doc(expense.id);
+
+    await docRef.set({
+      'id': expense.id,
+      'title': expense.title,
+      'amount': expense.amount,
+      'category': expense.category,
+      'date': Timestamp.fromDate(expense.date),
+      'description': expense.description,
+    });
+
+    return expense;
   }
 
-  
   Future<Expense> updateExpense(String id, Expense expense) async {
-    await _fakeDelay();
-    final index = _store.indexWhere((e) => e.id == id);
-    if (index == -1) throw Exception('Expense not found: $id');
+    final docRef = _db.collection(_collection).doc(id);
+
+    final doc = await docRef.get();
+    if (!doc.exists) {
+      throw Exception('Expense not found: $id');
+    }
 
     final updated = Expense(
       id: id,
@@ -78,24 +64,22 @@ class ApiService {
       amount: expense.amount,
       category: expense.category,
       date: expense.date,
+      description: expense.description,
     );
-    _store[index] = updated;
+
+    await docRef.update({
+      'title': updated.title,
+      'amount': updated.amount,
+      'category': updated.category,
+      'date': Timestamp.fromDate(updated.date),
+      'description': updated.description,
+    });
+
     return updated;
   }
 
- 
   Future<void> deleteExpense(String id) async {
-    await _fakeDelay();
-    _store.removeWhere((e) => e.id == id);
+    await _db.collection(_collection).doc(id).delete();
   }
-
- 
-
-  
-  static Future<void> _fakeDelay() =>
-      Future.delayed(Duration(milliseconds: 80 + Random().nextInt(120)));
-
-  static String _uid() =>
-      DateTime.now().microsecondsSinceEpoch.toString() +
-      Random().nextInt(9999).toString().padLeft(4, '0');
 }
+
