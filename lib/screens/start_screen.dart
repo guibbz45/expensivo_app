@@ -11,7 +11,6 @@ class StartScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      // If already authenticated, skip login.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, '/expenselist');
       });
@@ -88,9 +87,8 @@ class StartScreen extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         final auth = AuthService();
-                        // If user is already signed in, keep them on the app.
                         if (auth.currentUser != null) {
-                          Navigator.pushReplacementNamed(context, '/expense list');
+                          Navigator.pushReplacementNamed(context, '/expenselist');
                         } else {
                           Navigator.pushReplacementNamed(context, '/login');
                         }
