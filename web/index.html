@@ -23,16 +23,78 @@
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="expensivo_app">
+  <meta name="apple-mobile-web-app-title" content="Expensivo">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>expensivo_app</title>
+  <title>Expensivo</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <!-- Chatbase chatbot embed (from dashboard) -->
+  <!--
+    Gated: only load chatbot after user is authenticated.
+    The app will call: window.__expensivo_setChatbotEnabled(true|false)
+    based on FirebaseAuth state.
+  -->
+  <script>
+    (function () {
+      // Provide a function the Flutter app can call.
+      window.__expensivo_chatbotLoaded = false;
+      window.__expensivo_setChatbotEnabled = function (enabled) {
+        try {
+          if (!enabled) return;
+          if (window.__expensivo_chatbotLoaded) return;
+          window.__expensivo_chatbotLoaded = true;
+
+          // Typical Chatbase bootstrap.
+          if (!window.chatbase || window.chatbase("getState") !== "initialized") {
+            window.chatbase = function () {
+              if (!window.chatbase.q) {
+                window.chatbase.q = [];
+              }
+              window.chatbase.q.push(arguments);
+            };
+            window.chatbase = new Proxy(window.chatbase, {
+              get(target, prop) {
+                if (prop === "q") {
+                  return target.q;
+                }
+                return function () {
+                  return target[prop].apply(target, arguments);
+                };
+              }
+            });
+          }
+
+          var onLoad = function () {
+            var script = document.createElement("script");
+            script.src = "https://www.chatbase.co/embed.min.js";
+            script.id = "BAAwAZBmgfShGucP3Uj1k";
+            script.domain = "www.chatbase.co";
+            document.body.appendChild(script);
+          };
+
+          if (document.readyState === "complete") {
+            onLoad();
+          } else {
+            window.addEventListener("load", onLoad);
+          }
+        } catch (_) {
+          // Never break the app.
+        }
+      };
+
+      // Default: disabled until login.
+      window.__expensivo_setChatbotEnabled(false);
+    })();
+  </script>
+
+
+
   <script src="flutter_bootstrap.js" async></script>
+
 </body>
 </html>

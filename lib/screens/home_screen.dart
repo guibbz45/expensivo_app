@@ -13,6 +13,7 @@ class HomeScreen extends StatelessWidget {
   });
 
   final List<Expense> expenses;
+
   final VoidCallback onRefresh;
   final void Function(Expense) onAddExpense;
   final void Function(String, Expense) onEditExpense;
@@ -176,8 +177,10 @@ class _ExpenseTile extends StatelessWidget {
         leading: CircleAvatar(
           backgroundColor: _color,
           radius: 28,
-          child: Text(
-            expense.category[0].toUpperCase(),
+child: Text(
+              (expense.category.trim().isEmpty ? 'O' : expense.category.trim()[0])
+                  .toUpperCase(),
+
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,

@@ -58,7 +58,6 @@ class ExpenseDetailScreen extends StatelessWidget {
     }
   }
 
-  // ✅ Fixed: confirm before deleting, and handle context safely after async gap
   Future<void> _confirmDelete(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -85,7 +84,6 @@ class ExpenseDetailScreen extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    // ✅ Fixed: capture provider and messenger before async gap
     if (!context.mounted) return;
     final provider = context.read<ExpenseProvider>();
     final messenger = ScaffoldMessenger.of(context);
@@ -203,7 +201,6 @@ class ExpenseDetailScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    // ✅ Fixed: push AddEditExpenseScreen directly instead of named route
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -227,9 +224,9 @@ class ExpenseDetailScreen extends StatelessWidget {
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
-                      foregroundColor: Colors.white, // ✅ Added: ensure icon/text visible on red
+                      foregroundColor: Colors.white,
                     ),
-                    onPressed: () => _confirmDelete(context), // ✅ Fixed: now shows confirm dialog
+                    onPressed: () => _confirmDelete(context),
                     icon: const Icon(Icons.delete),
                     label: const Text('Delete'),
                   ),

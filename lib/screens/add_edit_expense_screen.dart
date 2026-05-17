@@ -119,12 +119,11 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
 
     widget.onSave(expense);
 
-    // ✅ Capture the message before popping, and guard setState with mounted
     final message = widget.expense != null ? 'Expense updated' : 'Expense added';
 
     if (mounted) {
       setState(() {
-        _isSaving = false;  // ✅ Reset before Navigator.pop to avoid setState on unmounted widget
+        _isSaving = false;
       });
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -198,8 +197,8 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
                       child: DropdownButton<String>(
                         value: _selectedCategory,
                         isExpanded: true,
-                        dropdownColor: const Color(0xFF1E1E1E), // ✅ Added for consistent dropdown styling
-                        style: const TextStyle(color: Colors.white),// ✅ Added so items match theme
+                        dropdownColor: const Color(0xFF1E1E1E),
+                        style: const TextStyle(color: Colors.white),
                         items: categories.map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
@@ -234,7 +233,7 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
                       child: Row(
                         children: [
                           const Icon(Icons.calendar_today, color: Colors.white54),
-                          const SizedBox(width: 12), // ✅ Fixed: icon and text now grouped together naturally
+                          const SizedBox(width: 12),
                           Text(
                             '${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}',
                             style: const TextStyle(color: Colors.white),

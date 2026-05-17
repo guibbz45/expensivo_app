@@ -15,8 +15,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   void initState() {
     super.initState();
-    // Replace with your actual Chatbase/chatbot public URL
-    const chatbotUrl = 'https://www.chatbase.co/chatbot-iframe/expensivo-7ff86';
+    const chatbotUrl = 'https://www.chatbase.co/chatbot-iframe/BAAwAZBmgfShGucP3Uj1k';
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)

@@ -15,7 +15,6 @@ class Expense {
     this.description,
   });
 
-  // Copy with method for editing
   Expense copyWith({
     String? id,
     String? title,
@@ -47,7 +46,7 @@ class Expense {
     return Expense(
       id: json['id'].toString(),
       title: json['title'] ?? '',
-      amount: (json['amount'] as num?)?.toDouble() ?? 1.0, // Default for mock
+      amount: (json['amount'] as num?)?.toDouble() ?? 1.0,
       category: json['category'] ?? 'Other',
       date: DateTime.tryParse(json['date'] ?? DateTime.now().toIso8601String()) ?? DateTime.now(),
       description: json['description'],

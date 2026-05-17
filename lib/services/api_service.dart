@@ -22,13 +22,23 @@ class ApiService {
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
-      // Prefer stored id, but fall back to document id.
       final id = (data['id'] ?? doc.id).toString();
+      final rawAmount = data['amount'];
+      final double amount = () {
+        if (rawAmount == null) return 0.0;
+        if (rawAmount is num) return rawAmount.toDouble();
+        if (rawAmount is String) return double.tryParse(rawAmount) ?? 0.0;
+        return 0.0;
+      }();
+
+      final rawCategory = (data['category'] ?? '');
+      final category = (rawCategory is String ? rawCategory : rawCategory.toString()).trim();
+
       return Expense(
         id: id,
         title: (data['title'] ?? '') as String,
-        amount: (data['amount'] as num).toDouble(),
-        category: (data['category'] ?? '') as String,
+        amount: amount,
+        category: category.isEmpty ? 'Other' : category,
         date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
         description: data['description'] as String?,
       );

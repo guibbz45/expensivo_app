@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../services/auth_service.dart';
+
 class StartScreen extends StatelessWidget {
   const StartScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // If already authenticated, skip login.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/expenselist');
+      });
+
+      return const Scaffold(body: SizedBox.shrink());
+    }
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -73,7 +87,13 @@ class StartScreen extends StatelessWidget {
                     height: 60,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/expenselist');
+                        final auth = AuthService();
+                        // If user is already signed in, keep them on the app.
+                        if (auth.currentUser != null) {
+                          Navigator.pushReplacementNamed(context, '/expense list');
+                        } else {
+                          Navigator.pushReplacementNamed(context, '/login');
+                        }
                       },
                       icon: const Icon(Icons.arrow_forward, size: 24),
                       label: const Text(

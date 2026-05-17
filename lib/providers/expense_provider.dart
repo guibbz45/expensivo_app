@@ -48,30 +48,7 @@ class ExpenseProvider extends ChangeNotifier {
   }
 
   List<Expense> _getSampleExpenses() {
-    final now = DateTime.now();
-    return [
-      Expense(
-        id: 'transport1',
-        title: 'Gas',
-        amount: 45.75,
-        category: 'Transportation', 
-        date: now.subtract(const Duration(days: 2)),
-      ),
-      Expense(
-        id: 'entertainment1',
-        title: 'Movies',
-        amount: 250.00,
-        category: 'Entertainment',
-        date: now.subtract(const Duration(days: 1)),
-      ),
-      Expense(
-        id: 'food1',
-        title: 'Apple',
-        amount: 15.50,
-        category: 'Food', 
-        date: now,
-      ),
-    ];
+    return [];
   }
 
   Future<void> addExpense(Expense expense) async {

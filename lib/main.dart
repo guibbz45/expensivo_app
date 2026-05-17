@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart' show Firebase;
+import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
 
 import 'homepage.dart';
 import 'screens/start_screen.dart';
+import 'screens/login_screen.dart';
+
+import 'package:flutter/foundation.dart';
+
+import 'web/set_chatbot_enabled.dart' as chatbot;
+
+
 import 'providers/expense_provider.dart';
 import 'models/expense_model.dart';
 import 'screens/add_edit_expense_screen.dart';
@@ -13,12 +19,28 @@ import 'screens/expense_detail_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+
+  try {
+    FirebaseOptions? options;
+    try {
+      options = DefaultFirebaseOptions.currentPlatform;
+    } catch (_) {
+      // Platform not supported or not configured via CLI
+    }
+
+    if (options != null) {
+      await Firebase.initializeApp(options: options);
+    } else {
+      await Firebase.initializeApp();
+    }
+  } catch (e) {
+    debugPrint('Firebase initialization error: $e');
+    // Continue running the app; Firebase services will throw if used,
+    // which can be caught in the UI/Providers.
+  }
+
   runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -26,8 +48,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ExpenseProvider()..loadExpenses(limit: 10),
+      create: (_) => ExpenseProvider(),
       child: MaterialApp(
+
         title: 'Expensivo',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
@@ -103,14 +126,16 @@ abstract class AppTheme {
 }
 
 abstract class AppRouter {
+  static void setChatbotEnabled(bool enabled) => chatbot.setChatbotEnabled(enabled);
+
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+
     switch (settings.name) {
       case '/add':
         return _buildRoute(
           settings,
           (context) => AddEditExpenseScreen(
-            onSave: (expense) =>
-                _provider(context).addExpense(expense),
+            onSave: (expense) => _provider(context).addExpense(expense),
           ),
         );
 
@@ -128,19 +153,29 @@ abstract class AppRouter {
           ),
         );
 
+      case '/login':
+        setChatbotEnabled(false);
+        return _buildRoute(
+          settings,
+          (_) => const LoginScreen(),
+        );
+
       case '/expenselist':
+        setChatbotEnabled(true);
         return _buildRoute(
           settings,
           (context) => const HomePage(),
         );
 
       case '/start':
+        setChatbotEnabled(false);
         return _buildRoute(
           settings,
           (_) => const StartScreen(),
         );
 
       case '/detail':
+        setChatbotEnabled(true);
         final expense = settings.arguments as Expense;
         return _buildRoute(
           settings,

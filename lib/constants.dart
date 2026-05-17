@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// const String apiBaseUrl = 'https://jsonplaceholder.typicode.com';
 
 const Map<String, Color> categoryColors = {
   'food': Color(0xFF4ECDC4),

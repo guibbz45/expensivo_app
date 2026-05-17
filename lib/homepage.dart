@@ -2,30 +2,45 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
+import '../constants.dart';
 import 'models/expense_model.dart';
 import 'providers/expense_provider.dart';
 
-class HomePage extends StatelessWidget {
+import 'screens/chatbot_screen.dart';
+import 'web/set_chatbot_enabled_nonweb_impl.dart';
+
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
 
   // ── Formatters ──────────────────────────────────────────────────────────────
 
   static String formatCurrency(double amount) =>
-      '₱${amount.toStringAsFixed(2)}';
+      '$currencySymbol${amount.toStringAsFixed(2)}';
 
   static String formatDate(DateTime date) =>
       '${date.month}/${date.day}/${date.year}';
 
   static Color categoryColor(String category) {
-    const map = {
-      'apple': Color(0xFFFF6B6B),
-      'gas': Color(0xFF4ECDC4),
-      'movies': Color(0xFFFFE66D),
-    };
-    return map[category.toLowerCase()] ?? const Color(0xFF1A3A52);
+    return categoryColors[category.toLowerCase()] ?? const Color(0xFF1A3A52);
+  }
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Load expenses after the first frame to avoid issues with context during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<ExpenseProvider>().loadExpenses(limit: 20);
+      }
+    });
   }
 
-  
   void _goToEdit(BuildContext context, Expense expense) =>
       Navigator.pushNamed(context, '/edit', arguments: expense);
 
@@ -35,59 +50,115 @@ class HomePage extends StatelessWidget {
   void _goToAdd(BuildContext context) =>
       Navigator.pushNamed(context, '/add');
 
-  
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Logout', style: TextStyle(color: Colors.white)),
+        content: const Text('Are you sure you want to logout?',
+            style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              await AuthService().signOut();
+              if (!mounted) return;
+              Navigator.pushNamedAndRemoveUntil(context, '/start', (r) => false);
+            },
+            child: const Text('Yes', style: TextStyle(color: Color(0xFFFF6B6B))),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ExpenseProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading) return const _LoadingView();
-        if (provider.error != null) return _ErrorView(provider: provider);
+        if (provider.isLoading && provider.expenses.isEmpty) return const _LoadingView();
+        if (provider.error != null && provider.expenses.isEmpty) return _ErrorView(provider: provider);
 
         final expenses = provider.expenses;
 
-        return Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.pushReplacementNamed(context, '/start'),
-            ),
-            title: const Text(
-              'Expenses',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1,
-              ),
-            ),
-            elevation: 4,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () => provider.loadExpenses(limit: 10),
-              ),
-            ],
-          ),
-          body: expenses.isEmpty
-              ? _EmptyState(onAdd: () => _goToAdd(context))
-              : _ExpenseList(
-                  expenses: expenses,
-                  onRefresh: () => provider.loadExpenses(limit: 10),
-                  onTap: (e) => _goToDetail(context, e),
-                  onEdit: (e) => _goToEdit(context, e),
-                  onDelete: (id) => _showDeleteDialog(context, id),
+        return PopScope(
+          canPop: false,
+          onPopInvoked: (didPop) {
+            if (didPop) return;
+            _confirmLogout(context);
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text(
+                'Expenses',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
                 ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _goToAdd(context),
-            icon: const Icon(Icons.add),
-            label: const Text('Add Expense'),
+              ),
+              elevation: 4,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => provider.loadExpenses(limit: 20, forceRefresh: true),
+                ),
+                IconButton(
+                  tooltip: 'Logout',
+                  icon: const Icon(Icons.logout),
+                  onPressed: () => _confirmLogout(context),
+                ),
+              ],
+            ),
+            body: expenses.isEmpty
+                ? _EmptyState(onAdd: () => _goToAdd(context))
+                : _ExpenseList(
+                    expenses: expenses,
+                    onRefresh: () => provider.loadExpenses(limit: 20, forceRefresh: true),
+                    onTap: (e) => _goToDetail(context, e),
+                    onEdit: (e) => _goToEdit(context, e),
+                    onDelete: (id) => _showDeleteDialog(context, id),
+                  ),
+            floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+            floatingActionButton: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  ValueListenableBuilder<bool>(
+                    valueListenable: chatbotVisibilityNotifier,
+                    builder: (context, isVisible, _) {
+                      if (!isVisible) return const SizedBox.shrink();
+                      return FloatingActionButton(
+                        heroTag: 'chatbot_fab',
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ChatbotScreen()),
+                        ),
+                        backgroundColor: const Color(0xFF4ECDC4),
+                        child: const Icon(Icons.chat_bubble, color: Colors.black87),
+                      );
+                    },
+                  ),
+                  const Spacer(),
+                  FloatingActionButton.extended(
+                    heroTag: 'add_expense_fab',
+                    onPressed: () => _goToAdd(context),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Expense'),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
     );
   }
-
-  
 
   void _showDeleteDialog(BuildContext context, String id) {
     showDialog(
@@ -237,7 +308,7 @@ class _ExpenseList extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: expenses.length,
               itemBuilder: (context, index) {
-                final expense = expenses.reversed.toList()[index];
+                final expense = expenses[index];
                 return _ExpenseCard(
                   expense: expense,
                   onTap: () => onTap(expense),
@@ -246,6 +317,7 @@ class _ExpenseList extends StatelessWidget {
                 );
               },
             ),
+
           ),
         ],
       ),
@@ -330,7 +402,9 @@ class _ExpenseCard extends StatelessWidget {
           backgroundColor: color,
           radius: 28,
           child: Text(
-            expense.category[0].toUpperCase(),
+            (expense.category.trim().isEmpty ? 'O' : expense.category.trim()[0])
+                .toUpperCase(),
+
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
